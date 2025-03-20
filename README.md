@@ -2,7 +2,7 @@
 
 A lightweight implementation of jelly-like physics for 3D objects in Unity using vertex manipulation and spring physics.
 
-![Jelly Physics Demo](screenshots/record.mp4)
+![Jelly Physics Demo](screenshots/record.gif)
 
 ## Overview
 
