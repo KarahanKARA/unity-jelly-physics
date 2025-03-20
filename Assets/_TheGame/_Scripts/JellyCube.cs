@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace _TheGame._Scripts
 {
-    public class JellyCubeImproved : MonoBehaviour
+    public class JellyCube : MonoBehaviour
     {
         [Header("Jelly Effect Settings")]
         [SerializeField] private float wobbleStrength = 0.2f; 

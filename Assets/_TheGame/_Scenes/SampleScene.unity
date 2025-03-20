@@ -650,13 +650,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 664149f4c58616d45a0dffc7e152e1ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wobbleStrength: 0.25
-  springStiffness: 12
-  damping: 0.8
-  horizontalMultiplier: 0.008
-  overShootMultiplier: 1.2
-  speed: 3.6
-  stretchFactor: 0.05
+  wobbleStrength: 0.2
+  springStiffness: 10
+  damping: 1
+  horizontalMultiplier: 0.01
+  overShootMultiplier: 1
+  speed: 4
+  stretchFactor: 0.1
   xAxisRandomness: 0.1
   yAxisRandomness: 0.1
   zAxisRandomness: 0.1
