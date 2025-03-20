@@ -19,6 +19,14 @@ namespace _TheGame._Scripts
         [SerializeField] private float yAxisRandomness = 0.1f;  
         [SerializeField] private float zAxisRandomness = 0.1f;  
         [SerializeField] private float randomSmoothness = 0.5f; 
+        
+        [Header("Velocity Limits")]
+        [SerializeField] private float maxVelocityMagnitude = 6f;
+        [SerializeField] private float clickImpactMultiplier = 5f;
+        [SerializeField] private float maxAccumulatedImpact = 15f;
+        
+        private float _currentAccumulatedImpact = 0f;
+        private float _impactDecayRate = 2f;
     
         private Mesh _originalMesh;        
         private Mesh _clonedMesh;          
@@ -93,9 +101,21 @@ namespace _TheGame._Scripts
             localVelocity.x *= horizontalMultiplier;
             localVelocity.z *= horizontalMultiplier;
 
+            if (localVelocity.magnitude > maxVelocityMagnitude)
+            {
+                localVelocity = localVelocity.normalized * maxVelocityMagnitude;
+            }
+
             _lastMovementMagnitude = Mathf.Lerp(_lastMovementMagnitude, localVelocity.magnitude, Time.deltaTime * 5f);
         
             UpdateVerticesWithSpringPhysics(localVelocity);
+            
+            // Decay accumulated impact over time
+            if (_currentAccumulatedImpact > 0)
+            {
+                _currentAccumulatedImpact -= _impactDecayRate * Time.deltaTime;
+                _currentAccumulatedImpact = Mathf.Max(0, _currentAccumulatedImpact);
+            }
         }
 
         private Vector3 CalculateMovementRandomOffset(int vertexIndex, Vector3 velocity)
@@ -164,6 +184,26 @@ namespace _TheGame._Scripts
             _clonedMesh.vertices = _modifiedVertices;
             _clonedMesh.RecalculateNormals();
             _clonedMesh.RecalculateBounds();
+        }
+        
+        public void ApplyForceImpact(Vector3 forceDirection, float forceMagnitude)
+        {
+            forceMagnitude *= clickImpactMultiplier;
+            
+            _currentAccumulatedImpact += forceMagnitude * 0.2f;
+            _currentAccumulatedImpact = Mathf.Min(_currentAccumulatedImpact, maxAccumulatedImpact);
+            
+            forceMagnitude *= (1f + _currentAccumulatedImpact * 0.1f);
+            
+            forceMagnitude = Mathf.Min(forceMagnitude, maxVelocityMagnitude * 3f);
+            
+            var localForceDirection = transform.InverseTransformDirection(forceDirection);
+            var tempVelocity = localForceDirection.normalized * forceMagnitude;
+            
+            tempVelocity.x *= horizontalMultiplier * 2f;
+            tempVelocity.z *= horizontalMultiplier * 2f;
+            
+            UpdateVerticesWithSpringPhysics(tempVelocity);
         }
     }
 }
