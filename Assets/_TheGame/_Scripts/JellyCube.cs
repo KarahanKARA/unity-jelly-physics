@@ -15,18 +15,24 @@ namespace _TheGame._Scripts
         [SerializeField] private float returnStrength = 0.5f;
     
         [Header("Movement Randomization")]
-        [SerializeField] private float xAxisRandomness = 0.1f;   
-        [SerializeField] private float yAxisRandomness = 0.1f;  
-        [SerializeField] private float zAxisRandomness = 0.1f;  
-        [SerializeField] private float randomSmoothness = 0.5f; 
+        [SerializeField] private float xAxisRandomness = 0.05f;   
+        [SerializeField] private float yAxisRandomness = 0.05f;  
+        [SerializeField] private float zAxisRandomness = 0.05f;  
+        [SerializeField] private float randomSmoothness = 0.5f;
+        
+        [Header("Wave Effect Settings")]
+        [SerializeField] private float waveSpeed = 3f;
+        [SerializeField] private float waveAmplitude = 0.8f;
         
         [Header("Velocity Limits")]
         [SerializeField] private float maxVelocityMagnitude = 6f;
         [SerializeField] private float clickImpactMultiplier = 5f;
         [SerializeField] private float maxAccumulatedImpact = 15f;
+        [SerializeField] private float bottomVertexMovementFactor = 0.1f;
         
         private float _currentAccumulatedImpact = 0f;
         private float _impactDecayRate = 2f;
+        private float _waveOffset = 0f;
     
         private Mesh _originalMesh;        
         private Mesh _clonedMesh;          
@@ -34,6 +40,7 @@ namespace _TheGame._Scripts
         private Vector3[] _modifiedVertices;
         private Vector3[] _vertexVelocities;
         private int[] _vertexSeedValues;     
+        private bool[] _isTopVertex;
 
         private Vector3 _prevPosition;     
         private Vector3 _velocity;         
@@ -56,6 +63,7 @@ namespace _TheGame._Scripts
             System.Array.Copy(_originalVertices, _modifiedVertices, _originalVertices.Length);
         
             _vertexVelocities = new Vector3[_originalVertices.Length];
+            _isTopVertex = new bool[_originalVertices.Length];
         
             _vertexSeedValues = new int[_originalVertices.Length];
             _randomDirections = new Vector3[_originalVertices.Length];
@@ -64,7 +72,8 @@ namespace _TheGame._Scripts
             for (var i = 0; i < _originalVertices.Length; i++)
             {
                 _vertexSeedValues[i] = rand.Next(0, 10000);
-            
+                _isTopVertex[i] = _originalVertices[i].y > 0;
+                
                 _randomDirections[i] = new Vector3(
                     (float)rand.NextDouble() * 2f - 1f,
                     (float)rand.NextDouble() * 2f - 1f,
@@ -91,13 +100,12 @@ namespace _TheGame._Scripts
         {
             _velocity = (transform.position - _prevPosition) / Time.deltaTime;
             _prevPosition = transform.position;
-        
+            
+            var velocityMagnitude = _velocity.magnitude;
+            
             var localVelocity = transform.InverseTransformDirection(_velocity);
-        
             localVelocity.y = 0;
-        
             localVelocity *= speed;
-        
             localVelocity.x *= horizontalMultiplier;
             localVelocity.z *= horizontalMultiplier;
 
@@ -107,10 +115,11 @@ namespace _TheGame._Scripts
             }
 
             _lastMovementMagnitude = Mathf.Lerp(_lastMovementMagnitude, localVelocity.magnitude, Time.deltaTime * 5f);
-        
+            
+            _waveOffset += Time.deltaTime * waveSpeed * (velocityMagnitude > 0.1f ? 1 : 0.2f);
+            
             UpdateVerticesWithSpringPhysics(localVelocity);
             
-            // Decay accumulated impact over time
             if (_currentAccumulatedImpact > 0)
             {
                 _currentAccumulatedImpact -= _impactDecayRate * Time.deltaTime;
@@ -140,6 +149,19 @@ namespace _TheGame._Scripts
             return randomOffset * (_lastMovementMagnitude * 0.5f + velocityMagnitude * 0.5f);
         }
 
+        private float CalculateWaveEffect(int vertexIndex, Vector3 vertexPosition)
+        {
+            var horizontalDistanceFromCenter = Vector2.Distance(
+                new Vector2(vertexPosition.x, vertexPosition.z), 
+                new Vector2(_objectCenter.x, _objectCenter.z)
+            );
+            
+            var vertexPhase = horizontalDistanceFromCenter + _waveOffset;
+            var waveEffect = Mathf.Sin(vertexPhase) * waveAmplitude;
+            
+            return waveEffect * Mathf.Max(_lastMovementMagnitude, _currentAccumulatedImpact * 0.1f);
+        }
+
         private void UpdateVerticesWithSpringPhysics(Vector3 localVelocity)
         {
             var deltaTime = Time.deltaTime;
@@ -148,36 +170,54 @@ namespace _TheGame._Scripts
         
             for (var i = 0; i < _modifiedVertices.Length; i++)
             {
-                if (_originalVertices[i].y > 0)
+                var isTop = _isTopVertex[i];
+                var movementFactor = isTop ? 1f : bottomVertexMovementFactor;
+                
+                var movementRandomOffset = CalculateMovementRandomOffset(i, localVelocity);
+                
+                var targetOffset = -localVelocity * (wobbleStrength * overShootMultiplier * movementFactor);
+                targetOffset += movementRandomOffset;
+                
+                var vertexToCenter = _objectCenter - _originalVertices[i];
+                vertexToCenter.y = 0;
+                
+                var dot = Vector3.Dot(movementDirection, vertexToCenter.normalized);
+                var stretchAmount = dot * stretchFactor * velocityMagnitude * movementFactor;
+                
+                var waveEffect = CalculateWaveEffect(i, _originalVertices[i]);
+                var stretchVector = new Vector3(0, stretchAmount + waveEffect, 0);
+                
+                if (isTop || velocityMagnitude > 0.5f || _currentAccumulatedImpact > 0.5f)
                 {
-                    var movementRandomOffset = CalculateMovementRandomOffset(i, localVelocity);
-                
-                    var targetOffset = -localVelocity * (wobbleStrength * overShootMultiplier);
-                    targetOffset += movementRandomOffset;
-                
-                    var vertexToCenter = _objectCenter - _originalVertices[i];
-                    vertexToCenter.y = 0;
-                
-                    var dot = Vector3.Dot(movementDirection, vertexToCenter.normalized);
-                    var stretchAmount = dot * stretchFactor * velocityMagnitude;
-                    var stretchVector = new Vector3(0, stretchAmount, 0);
-                
                     var springForce = (_originalVertices[i] + targetOffset + stretchVector - _modifiedVertices[i]) * springStiffness;
-                
                     var returnForce = (_originalVertices[i] - _modifiedVertices[i]) * (returnStrength * (1f - Mathf.Min(1f, velocityMagnitude * 0.5f)));
-                
                     var dampingForce = -_vertexVelocities[i] * damping;
-                
+                    
                     var force = springForce + dampingForce + returnForce;
-                
+                    
                     var timeScale = Mathf.Clamp(1.0f + speed, 1.0f, 3.0f);
                     _vertexVelocities[i] += force * (deltaTime * timeScale);
+                    
+                    var maxDisplacement = isTop ? 1.0f : 0.2f;
+                    if (_vertexVelocities[i].magnitude > maxDisplacement)
+                    {
+                        _vertexVelocities[i] = _vertexVelocities[i].normalized * maxDisplacement;
+                    }
+                    
                     _modifiedVertices[i] += _vertexVelocities[i] * (deltaTime * timeScale);
+                    
+                    var maxDistance = isTop ? 0.5f : 0.1f;
+                    var currentDistance = Vector3.Distance(_originalVertices[i], _modifiedVertices[i]);
+                    if (currentDistance > maxDistance)
+                    {
+                        var direction = (_modifiedVertices[i] - _originalVertices[i]).normalized;
+                        _modifiedVertices[i] = _originalVertices[i] + direction * maxDistance;
+                    }
                 }
                 else
                 {
-                    _modifiedVertices[i] = _originalVertices[i];
-                    _vertexVelocities[i] = Vector3.zero;
+                    _modifiedVertices[i] = Vector3.Lerp(_modifiedVertices[i], _originalVertices[i], deltaTime * 5f);
+                    _vertexVelocities[i] = Vector3.Lerp(_vertexVelocities[i], Vector3.zero, deltaTime * 5f);
                 }
             }
         
