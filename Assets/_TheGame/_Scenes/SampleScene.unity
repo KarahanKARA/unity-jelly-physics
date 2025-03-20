@@ -158,10 +158,10 @@ MonoBehaviour:
   wobbleStrength: 0.25
   springStiffness: 10
   damping: 0.5
-  horizontalMultiplier: 0.015
+  horizontalMultiplier: 0.01
   overShootMultiplier: 1
-  speed: 3
-  stretchFactor: 0.125
+  speed: 4
+  stretchFactor: 0.1
   returnStrength: 0.5
   xAxisRandomness: 0.1
   yAxisRandomness: 0.1
@@ -556,7 +556,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 781852682}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -608,7 +608,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 10, y: 0.2, z: 10}
+  m_LocalScale: {x: 100, y: 0.2, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -697,10 +697,10 @@ MonoBehaviour:
   wobbleStrength: 0.25
   springStiffness: 10
   damping: 0.5
-  horizontalMultiplier: 0.015
+  horizontalMultiplier: 0.01
   overShootMultiplier: 1
-  speed: 3
-  stretchFactor: 0.125
+  speed: 4
+  stretchFactor: 0.1
   returnStrength: 0.5
   xAxisRandomness: 0.1
   yAxisRandomness: 0.1
@@ -802,7 +802,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1185458038}
   m_Layer: 0
-  m_Name: PArent
+  m_Name: Parent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -947,10 +947,10 @@ MonoBehaviour:
   wobbleStrength: 0.25
   springStiffness: 10
   damping: 0.5
-  horizontalMultiplier: 0.015
+  horizontalMultiplier: 0.01
   overShootMultiplier: 1
-  speed: 3
-  stretchFactor: 0.125
+  speed: 4
+  stretchFactor: 0.1
   returnStrength: 0.5
   xAxisRandomness: 0.1
   yAxisRandomness: 0.1

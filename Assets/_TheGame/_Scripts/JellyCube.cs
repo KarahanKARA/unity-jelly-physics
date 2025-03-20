@@ -5,9 +5,9 @@ namespace _TheGame._Scripts
     public class JellyCube : MonoBehaviour
     {
         [Header("Jelly Effect Settings")]
-        [SerializeField] private float wobbleStrength = 0.2f; 
+        [SerializeField] private float wobbleStrength = 0.25f; 
         [SerializeField] private float springStiffness = 10f;    
-        [SerializeField] private float damping = 1f;         
+        [SerializeField] private float damping = 0.5f;         
         [SerializeField] private float horizontalMultiplier = 0.01f; 
         [SerializeField] private float overShootMultiplier = 1f;
         [SerializeField] private float speed = 4.0f;            
@@ -15,10 +15,10 @@ namespace _TheGame._Scripts
         [SerializeField] private float returnStrength = 0.5f;
     
         [Header("Movement Randomization")]
-        [SerializeField] private float xAxisRandomness = 0.3f;   
-        [SerializeField] private float yAxisRandomness = 0.2f;  
-        [SerializeField] private float zAxisRandomness = 0.3f;  
-        [SerializeField] private float randomSmoothness = 2.5f; 
+        [SerializeField] private float xAxisRandomness = 0.1f;   
+        [SerializeField] private float yAxisRandomness = 0.1f;  
+        [SerializeField] private float zAxisRandomness = 0.1f;  
+        [SerializeField] private float randomSmoothness = 0.5f; 
     
         private Mesh _originalMesh;        
         private Mesh _clonedMesh;          
